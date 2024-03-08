@@ -9,7 +9,7 @@ Brevitas is a PyTorch library for neural network quantization, with support for 
 
 **Please note that Brevitas is a research project and not an official Xilinx product.**
 
-If you like this project please consider ⭐ this repo, as it is the simplest and best way to support it.
+If you like this project please consider ⭐ this repo, as it is the simplest and best way to support it .
 
 ## Requirements
 
