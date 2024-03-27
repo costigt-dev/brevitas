@@ -24,7 +24,7 @@ from .base import QuantAxisMixin
 from .base import ZeroPointHandlerMixin
 
 
-class DQMixin(ABC):
+class DQCastMixin(ABC):
 
     @abstractmethod
     def validate(self):
@@ -50,9 +50,6 @@ class DQMixin(ABC):
             if isinstance(bools, torch.Tensor):
                 bools = bools.all()
             assert bools
-
-
-class DQCastMixin(DQMixin, ABC):
 
     @abstractmethod
     def cast_fn(self, x, dtype):
