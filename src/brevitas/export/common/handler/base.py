@@ -12,7 +12,7 @@ from torch.nn import Module
 from brevitas.function.ops import max_int
 from brevitas.function.ops import min_int
 
-__all__ = ['BaseHandler', 'BitWidthHandlerMixin', 'ZeroPointHandlerMixin']
+__all__ = ['BaseHandler', 'ZeroPointHandlerMixin']
 
 
 class BaseHandler(Module, ABC):
@@ -58,34 +58,6 @@ class ClipMixin(ABC):
                 'max_val': max_int(signed, narrow, bit_width).to(dtype)}
         else:
             return None
-
-
-class BitWidthHandlerMixin(ABC):
-
-    @classmethod
-    def validate_bit_width(cls, bit_width: Tensor, reference: int, le_then=False):
-        if bit_width is None:
-            raise RuntimeError("Bit width cannot be None")
-        if isinstance(bit_width, torch.Tensor):
-            bit_width = bit_width.item()
-        bit_width = int(bit_width)
-        if bit_width > reference:
-            raise RuntimeError(f"Bit width {bit_width} is not supported.")
-        elif bit_width < reference and not le_then:
-            raise RuntimeError(f"Bit width {bit_width} is not supported, should be {reference}b.")
-        return bit_width
-
-    @classmethod
-    def validate_8b_bit_width(cls, bit_width: Tensor, le_then=False):
-        return cls.validate_bit_width(bit_width, 8, le_then)
-
-    @classmethod
-    def validate_16b_bit_width(cls, bit_width: Tensor, le_then=False):
-        return cls.validate_bit_width(bit_width, 16, le_then)
-
-    @classmethod
-    def validate_32b_bit_width(cls, bit_width: Tensor, le_then=False):
-        return cls.validate_bit_width(bit_width, 32, le_then)
 
 
 class ScaleHandlerMixin(ABC):

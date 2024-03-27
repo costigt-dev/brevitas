@@ -18,7 +18,6 @@ from brevitas.proxy import WeightQuantProxyFromInjector
 from brevitas.proxy.runtime_quant import DynamicActQuantProxyFromInjector
 from brevitas.proxy.runtime_quant import TruncQuantProxyFromInjector
 
-from .base import BitWidthHandlerMixin
 from .base import ClipMixin
 from .base import QuantAxisMixin
 from .base import ZeroPointHandlerMixin
@@ -63,7 +62,32 @@ class CDQCastMixin(DQCastMixin, ABC):
         pass
 
 
-class QMixin(BitWidthHandlerMixin, ABC):
+class QMixin(ABC):
+
+    @classmethod
+    def validate_bit_width(cls, bit_width: Tensor, reference: int, le_then=False):
+        if bit_width is None:
+            raise RuntimeError("Bit width cannot be None")
+        if isinstance(bit_width, torch.Tensor):
+            bit_width = bit_width.item()
+        bit_width = int(bit_width)
+        if bit_width > reference:
+            raise RuntimeError(f"Bit width {bit_width} is not supported.")
+        elif bit_width < reference and not le_then:
+            raise RuntimeError(f"Bit width {bit_width} is not supported, should be {reference}b.")
+        return bit_width
+
+    @classmethod
+    def validate_8b_bit_width(cls, bit_width: Tensor, le_then=False):
+        return cls.validate_bit_width(bit_width, 8, le_then)
+
+    @classmethod
+    def validate_16b_bit_width(cls, bit_width: Tensor, le_then=False):
+        return cls.validate_bit_width(bit_width, 16, le_then)
+
+    @classmethod
+    def validate_32b_bit_width(cls, bit_width: Tensor, le_then=False):
+        return cls.validate_bit_width(bit_width, 32, le_then)
 
     @classmethod
     @abstractmethod
