@@ -18,6 +18,7 @@ from brevitas.export.common.handler.qcdq import QCDQCastWeightQuantProxyHandlerM
 from brevitas.export.common.handler.qcdq import QMixin
 from brevitas.export.onnx.handler import ONNXBaseHandler
 from brevitas.export.onnx.handler import QuantLSTMLayerHandler
+from brevitas.utils.quant_utils import validate_8b_bit_width
 
 from ..function import CastFn
 from ..function import DequantizeLinearFn
@@ -71,7 +72,7 @@ class StdQCDQCastONNXMixin(QMixin, CDQCastMixin, StdDQCastONNXMixin, ABC):
             assert module.rounding_mode.upper() == 'ROUND', 'Only round to nearest even supported'
         assert not module.is_groupwise, "Export with Per Group quantization not supported"
 
-        self.validate_8b_bit_width(module.bit_width(), le_then=True)
+        validate_8b_bit_width(module.bit_width(), le_then=True)
 
     def quantize_fn(self, x, scale, zero_point, dtype, axis):
         return QuantizeLinearFn.apply(x, scale, zero_point, dtype, axis)
@@ -100,7 +101,7 @@ class StdDynamicQDQCastONNXMixin(QMixin, StdDQCastONNXMixin, ABC):
         # Below 8b quantization is supported through clipping.
         assert module.rounding_mode.upper() == 'ROUND', 'Only round to nearest even supported'
         # Below 8b quantization is not supported.
-        self.validate_8b_bit_width(module.bit_width(), le_then=False)
+        validate_8b_bit_width(module.bit_width(), le_then=False)
         # Only per tensor quantization is supported
         assert not module.quant_injector.scaling_per_output_channel, "Only per tensor scaling supported"
 

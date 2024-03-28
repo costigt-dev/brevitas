@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import torch
+from torch import Tensor
 
 from brevitas.core.bit_width import BitWidthParameter
 from brevitas.core.function_wrapper import *
@@ -96,3 +97,20 @@ def zero_point_with_dtype(signed, bit_width, zero_point):
             return zero_point.type(torch.int8)
         else:
             return zero_point.type(torch.int32)
+
+
+def validate_bit_width(bit_width: Tensor, reference: int, le_then=False):
+    if bit_width is None:
+        raise RuntimeError("Bit width cannot be None")
+    if isinstance(bit_width, torch.Tensor):
+        bit_width = bit_width.item()
+    bit_width = int(bit_width)
+    if bit_width > reference:
+        raise RuntimeError(f"Bit width {bit_width} is not supported.")
+    elif bit_width < reference and not le_then:
+        raise RuntimeError(f"Bit width {bit_width} is not supported, should be {reference}b.")
+    return bit_width
+
+
+def validate_8b_bit_width(bit_width: Tensor, le_then=False):
+    return validate_bit_width(bit_width, 8, le_then)
