@@ -75,3 +75,10 @@ def int_clip_symbolic_kwargs(narrow, signed, bit_width) -> dict:
             'max_val': max_int(signed, narrow, bit_width).to(dtype).item()}
     else:
         return None
+
+
+def quant_axis(scale):
+    for i, s in enumerate(scale.shape):
+        if s != 1:
+            return i
+    return None

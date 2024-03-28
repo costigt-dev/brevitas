@@ -25,16 +25,6 @@ class BaseHandler(Module, ABC):
         pass
 
 
-class QuantAxisMixin(ABC):
-
-    @classmethod
-    def quant_axis(cls, scale):
-        for i, s in enumerate(scale.shape):
-            if s != 1:
-                return i
-        return None
-
-
 class ScaleHandlerMixin(ABC):
 
     @classmethod

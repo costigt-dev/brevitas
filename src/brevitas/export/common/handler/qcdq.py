@@ -19,7 +19,6 @@ from brevitas.proxy.runtime_quant import DynamicActQuantProxyFromInjector
 from brevitas.proxy.runtime_quant import TruncQuantProxyFromInjector
 import brevitas.utils.quant_utils as qutils
 
-from .base import QuantAxisMixin
 from .base import ZeroPointHandlerMixin
 
 
@@ -124,11 +123,11 @@ class QMixin(ABC):
         return dtype
 
 
-class CDQCastProxyHandlerMixin(QuantAxisMixin, ZeroPointHandlerMixin, CDQCastMixin, ABC):
+class CDQCastProxyHandlerMixin(ZeroPointHandlerMixin, CDQCastMixin, ABC):
 
     def dequantize_symbolic_kwargs(cls, scale, zero_point, bit_width, is_signed):
         scale_orig_shape = scale.shape
-        axis = cls.quant_axis(scale)
+        axis = qutils.quant_axis(scale)
         if cls.flatten_dequantize_params:
             scale = scale.flatten()
         scale = to_0dim_if_scalar(scale)
@@ -152,7 +151,7 @@ class QCDQCastWeightQuantProxyHandlerMixin(QMixin, CDQCastProxyHandlerMixin):
 
     def quantize_symbolic_kwargs(cls, scale, zero_point, bit_width, is_signed):
         # compute axis before redefining scale
-        axis = cls.quant_axis(scale)
+        axis = qutils.quant_axis(scale)
         scale = to_0dim_if_scalar(scale.flatten())
         zp = to_0dim_if_scalar(zero_point.flatten())
         # expand_as must go after 0-dim check
@@ -270,7 +269,7 @@ class QCDQCastActQuantProxyHandlerMixin(QMixin, CDQCastProxyHandlerMixin, ABC):
 
     def quantize_symbolic_kwargs(cls, scale, zero_point, bit_width, is_signed):
         # compute axis before redefining scale
-        axis = cls.quant_axis(scale)
+        axis = qutils.quant_axis(scale)
         scale = to_0dim_if_scalar(scale.flatten())
         zp = to_0dim_if_scalar(zero_point.flatten())
         # expand_as must go after 0-dim check
@@ -371,7 +370,7 @@ class DynamicQDQCastActQuantProxyHandlerMixin(QMixin, DQCastMixin, ABC):
         return x, scale, zero_point, bit_width
 
 
-class CDQCastBiasQuantProxyHandlerMixin(DQCastMixin, QuantAxisMixin, ZeroPointHandlerMixin, ABC):
+class CDQCastBiasQuantProxyHandlerMixin(DQCastMixin, ZeroPointHandlerMixin, ABC):
     handled_layer = BiasQuantProxyFromInjector
 
     def validate(self, module):
@@ -407,7 +406,7 @@ class CDQCastBiasQuantProxyHandlerMixin(DQCastMixin, QuantAxisMixin, ZeroPointHa
         scale_orig_shape = scale.shape
         if input_bit_width is not None:
             bit_width = input_bit_width
-        quant_axis = self.quant_axis(scale)
+        quant_axis = qutils.quant_axis(scale)
         if self.flatten_dequantize_params:
             scale = scale.flatten()
             zero_point = zero_point.flatten()
@@ -431,11 +430,7 @@ class CDQCastBiasQuantProxyHandlerMixin(DQCastMixin, QuantAxisMixin, ZeroPointHa
         return y, scale, zero_point, bit_width
 
 
-class QCDQCastTruncQuantProxyHandlerMixin(QuantAxisMixin,
-                                          ZeroPointHandlerMixin,
-                                          QMixin,
-                                          CDQCastMixin,
-                                          ABC):
+class QCDQCastTruncQuantProxyHandlerMixin(ZeroPointHandlerMixin, QMixin, CDQCastMixin, ABC):
     handled_layer = TruncQuantProxyFromInjector
 
     def prepare_for_export(self, module: TruncQuantProxyFromInjector):
@@ -461,12 +456,12 @@ class QCDQCastTruncQuantProxyHandlerMixin(QuantAxisMixin,
         flat_pre_scale = to_0dim_if_scalar(pre_scale.flatten())
         flat_scale = to_0dim_if_scalar(scale.flatten())
         zp = to_0dim_if_scalar(zero_point.flatten()).expand_as(flat_scale)
-        x = self.quantize_fn(x, flat_pre_scale, zp, dtype, self.quant_axis(pre_scale))
+        x = self.quantize_fn(x, flat_pre_scale, zp, dtype, qutils.quant_axis(pre_scale))
         clip_symbolic_kwargs = qutils.int_clip_symbolic_kwargs(
             signed=signed, narrow=False, bit_width=output_bit_width)
         if clip_symbolic_kwargs is not None:
             x = self.clip_fn(x, *clip_symbolic_kwargs.values())
-        x = self.dequantize_fn(x, flat_scale, zp, self.quant_axis(scale))
+        x = self.dequantize_fn(x, flat_scale, zp, qutils.quant_axis(scale))
         # After dequantization, cast both output and scale to the correct dtype
         if scale_dtype == torch.float16 or scale_dtype == torch.bfloat16:
             x = self.cast_fn(x, scale_dtype)
