@@ -124,13 +124,6 @@ class QMixin(ABC):
         return dtype
 
 
-class DynamicQMixin(QMixin, ABC):
-
-    @abstractmethod
-    def quantize_fn(self, x, dtype):
-        pass
-
-
 class CDQCastProxyHandlerMixin(QuantAxisMixin, ZeroPointHandlerMixin, CDQCastMixin, ABC):
 
     def dequantize_symbolic_kwargs(cls, scale, zero_point, bit_width, is_signed):
@@ -341,7 +334,7 @@ class QCDQCastActQuantProxyHandlerMixin(QMixin, CDQCastProxyHandlerMixin, ABC):
         return x, scale, zero_point, bit_width
 
 
-class DynamicQDQCastActQuantProxyHandlerMixin(DynamicQMixin, DQCastMixin, ABC):
+class DynamicQDQCastActQuantProxyHandlerMixin(QMixin, DQCastMixin, ABC):
     handled_layer = DynamicActQuantProxyFromInjector
 
     def prepare_for_export(self, module):
@@ -368,7 +361,7 @@ class DynamicQDQCastActQuantProxyHandlerMixin(DynamicQMixin, DQCastMixin, ABC):
         if x_dtype == torch.float16 or x_dtype == torch.bfloat16:
             x = self.cast_fn(x, torch.float32)
 
-        x, scale, zero_point = self.quantize_fn(x, int_dtype)
+        x, scale, zero_point = self.quantize_fn(x, None, None, int_dtype, None)
 
         x = self.dequantize_fn(x, scale, zero_point, None)
         # After dequantization, cast both output and scale to the correct dtype

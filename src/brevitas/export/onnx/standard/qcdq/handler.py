@@ -9,7 +9,6 @@ from brevitas.export.common.handler.qcdq import CDQCastBiasQuantProxyHandlerMixi
 from brevitas.export.common.handler.qcdq import CDQCastMixin
 from brevitas.export.common.handler.qcdq import DQCastMixin
 from brevitas.export.common.handler.qcdq import DynamicQDQCastActQuantProxyHandlerMixin
-from brevitas.export.common.handler.qcdq import DynamicQMixin
 from brevitas.export.common.handler.qcdq import QCDQCastActQuantProxyHandlerMixin
 from brevitas.export.common.handler.qcdq import QCDQCastDecoupledWeightQuantProxyHandlerMixin
 from brevitas.export.common.handler.qcdq import \
@@ -81,7 +80,7 @@ class StdQCDQCastONNXMixin(QMixin, StdCDQCastONNXMixin, ABC):
         return QuantizeLinearFn.apply(x, scale, zero_point, dtype, axis)
 
 
-class StdDynamicQDQCastONNXMixin(DynamicQMixin, StdDQCastONNXMixin, ABC):
+class StdDynamicQDQCastONNXMixin(QMixin, StdDQCastONNXMixin, ABC):
 
     @classmethod
     def int8_dtype(cls):
@@ -108,7 +107,7 @@ class StdDynamicQDQCastONNXMixin(DynamicQMixin, StdDQCastONNXMixin, ABC):
         # Only per tensor quantization is supported
         assert not module.quant_injector.scaling_per_output_channel, "Only per tensor scaling supported"
 
-    def quantize_fn(self, x, dtype):
+    def quantize_fn(self, x, scale=None, zero_point=None, dtype=None, axis=None):
         return DynamicQuantizeLinearFn.apply(x, dtype)
 
 
