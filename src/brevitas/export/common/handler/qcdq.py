@@ -17,8 +17,8 @@ from brevitas.proxy import DecoupledWeightQuantWithInputProxyFromInjector
 from brevitas.proxy import WeightQuantProxyFromInjector
 from brevitas.proxy.runtime_quant import DynamicActQuantProxyFromInjector
 from brevitas.proxy.runtime_quant import TruncQuantProxyFromInjector
+import brevitas.utils.quant_utils as qutils
 
-from .base import ClipMixin
 from .base import QuantAxisMixin
 from .base import ZeroPointHandlerMixin
 
@@ -131,7 +131,7 @@ class DynamicQMixin(QMixin, ABC):
         pass
 
 
-class CDQCastProxyHandlerMixin(QuantAxisMixin, ClipMixin, ZeroPointHandlerMixin, CDQCastMixin, ABC):
+class CDQCastProxyHandlerMixin(QuantAxisMixin, ZeroPointHandlerMixin, CDQCastMixin, ABC):
 
     def dequantize_symbolic_kwargs(cls, scale, zero_point, bit_width, is_signed):
         scale_orig_shape = scale.shape
@@ -205,7 +205,7 @@ class QCDQCastWeightQuantProxyHandlerMixin(QMixin, CDQCastProxyHandlerMixin):
                 scale = self.cast_fn(scale, torch.float32)
 
             self.symbolic_kwargs['bit_width'] = quant_weight.bit_width
-            self.symbolic_kwargs['clip_symbolic_kwargs'] = self.int_clip_symbolic_kwargs(
+            self.symbolic_kwargs['clip_symbolic_kwargs'] = qutils.int_clip_symbolic_kwargs(
                 module.is_narrow_range, module.is_signed, quant_weight.bit_width)
             self.symbolic_kwargs['dequantize_symbolic_kwargs'] = self.dequantize_symbolic_kwargs(
                 scale, quant_weight.zero_point, quant_weight.bit_width, module.is_signed)
@@ -306,7 +306,7 @@ class QCDQCastActQuantProxyHandlerMixin(QMixin, CDQCastProxyHandlerMixin, ABC):
                 scale, module.zero_point(), module.bit_width(), module.is_signed)
             self.symbolic_kwargs['dequantize_symbolic_kwargs'] = self.dequantize_symbolic_kwargs(
                 scale, module.zero_point(), module.bit_width(), module.is_signed)
-            self.symbolic_kwargs['clip_symbolic_kwargs'] = self.int_clip_symbolic_kwargs(
+            self.symbolic_kwargs['clip_symbolic_kwargs'] = qutils.int_clip_symbolic_kwargs(
                 module.is_narrow_range, module.is_signed, module.bit_width())
 
         else:
@@ -439,7 +439,6 @@ class CDQCastBiasQuantProxyHandlerMixin(DQCastMixin, QuantAxisMixin, ZeroPointHa
 
 
 class QCDQCastTruncQuantProxyHandlerMixin(QuantAxisMixin,
-                                          ClipMixin,
                                           ZeroPointHandlerMixin,
                                           QMixin,
                                           CDQCastMixin,
@@ -470,7 +469,7 @@ class QCDQCastTruncQuantProxyHandlerMixin(QuantAxisMixin,
         flat_scale = to_0dim_if_scalar(scale.flatten())
         zp = to_0dim_if_scalar(zero_point.flatten()).expand_as(flat_scale)
         x = self.quantize_fn(x, flat_pre_scale, zp, dtype, self.quant_axis(pre_scale))
-        clip_symbolic_kwargs = self.int_clip_symbolic_kwargs(
+        clip_symbolic_kwargs = qutils.int_clip_symbolic_kwargs(
             signed=signed, narrow=False, bit_width=output_bit_width)
         if clip_symbolic_kwargs is not None:
             x = self.clip_fn(x, *clip_symbolic_kwargs.values())

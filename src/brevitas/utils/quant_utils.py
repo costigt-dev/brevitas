@@ -1,9 +1,13 @@
 # Copyright (C) 2023, Advanced Micro Devices, Inc. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
 
+import torch
+
 from brevitas.core.bit_width import BitWidthParameter
 from brevitas.core.function_wrapper import *
 from brevitas.core.quant import RescalingIntQuant
+from brevitas.function.ops import max_int
+from brevitas.function.ops import min_int
 from brevitas.inject.enum import FloatToIntImplType
 
 
@@ -51,5 +55,23 @@ def float_to_int_impl_to_enum(module):
             return FloatToIntImplType.ROUND
         else:
             return FloatToIntImplType.STOCHASTIC_ROUND
+    else:
+        return None
+
+
+def int_clip_symbolic_kwargs(narrow, signed, bit_width) -> dict:
+    # equality comparisons among power-of-2 floats are okay
+    if narrow or bit_width != 8. and bit_width != 32.:
+        if signed and (bit_width < 8. or narrow and bit_width <= 8.):
+            dtype = torch.int8
+        elif not signed and (bit_width < 8. or narrow and bit_width <= 8.):
+            dtype = torch.uint8
+        elif signed and (bit_width < 32. or narrow and bit_width <= 32.):
+            dtype = torch.int32
+        else:
+            raise RuntimeError(f"Sign {signed} and bit width {bit_width} not supported for export.")
+        return {
+            'min_val': min_int(signed, narrow, bit_width).to(dtype).item(),
+            'max_val': max_int(signed, narrow, bit_width).to(dtype).item()}
     else:
         return None

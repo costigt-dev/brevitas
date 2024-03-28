@@ -102,21 +102,11 @@ class TorchQCDQCastWeightQuantProxyHandler(TorchQCDQCastMixin,
                                            TorchQCDQHandler):
     _export_q_node = False
 
-    @classmethod
-    def int_clip_symbolic_kwargs(cls, narrow, signed, bit_width):
-        clip_args = super().int_clip_symbolic_kwargs(narrow, signed, bit_width)
-        return _itemize_clip_bounds(clip_args)
-
 
 class TorchQCDQCastDecoupledWeightQuantProxyHandler(TorchQCDQCastMixin,
                                                     QCDQCastDecoupledWeightQuantProxyHandlerMixin,
                                                     TorchQCDQHandler):
     _export_q_node = False
-
-    @classmethod
-    def int_clip_symbolic_kwargs(cls, narrow, signed, bit_width):
-        clip_args = super().int_clip_symbolic_kwargs(narrow, signed, bit_width)
-        return _itemize_clip_bounds(clip_args)
 
 
 class TorchQCDQCastDecoupledWeightQuantWithInputProxyHandler(
@@ -124,20 +114,11 @@ class TorchQCDQCastDecoupledWeightQuantWithInputProxyHandler(
         TorchQCDQHandler):
     _export_q_node = False
 
-    @classmethod
-    def int_clip_symbolic_kwargs(cls, narrow, signed, bit_width):
-        clip_args = super().int_clip_symbolic_kwargs(narrow, signed, bit_width)
-        return _itemize_clip_bounds(clip_args)
-
 
 class TorchQCDQCastActQuantProxyHandler(TorchQCDQCastMixin,
                                         QCDQCastActQuantProxyHandlerMixin,
                                         TorchQCDQHandler):
-
-    @classmethod
-    def int_clip_symbolic_kwargs(cls, narrow, signed, bit_width):
-        clip_args = super().int_clip_symbolic_kwargs(narrow, signed, bit_width)
-        return _itemize_clip_bounds(clip_args)
+    pass
 
 
 class TorchCDQCastBiasQuantProxyHandler(TorchDQCastMixin,
@@ -150,7 +131,4 @@ class TorchQCDQCastTruncQuantProxyHandler(TorchQCDQCastMixin,
                                           QCDQCastTruncQuantProxyHandlerMixin,
                                           TorchQCDQHandler):
 
-    @classmethod
-    def int_clip_symbolic_kwargs(cls, narrow, signed, bit_width):
-        clip_args = super().int_clip_symbolic_kwargs(narrow, signed, bit_width)
-        return _itemize_clip_bounds(clip_args)
+    pass
