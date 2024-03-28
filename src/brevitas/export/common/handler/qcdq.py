@@ -19,8 +19,6 @@ from brevitas.proxy.runtime_quant import DynamicActQuantProxyFromInjector
 from brevitas.proxy.runtime_quant import TruncQuantProxyFromInjector
 import brevitas.utils.quant_utils as qutils
 
-from .base import ZeroPointHandlerMixin
-
 
 class DQCastMixin(ABC):
 
@@ -123,7 +121,7 @@ class QMixin(ABC):
         return dtype
 
 
-class CDQCastProxyHandlerMixin(ZeroPointHandlerMixin, CDQCastMixin, ABC):
+class CDQCastProxyHandlerMixin(CDQCastMixin, ABC):
 
     def dequantize_symbolic_kwargs(cls, scale, zero_point, bit_width, is_signed):
         scale_orig_shape = scale.shape
@@ -135,7 +133,7 @@ class CDQCastProxyHandlerMixin(ZeroPointHandlerMixin, CDQCastMixin, ABC):
             zero_point = zero_point.flatten()
         zp = to_0dim_if_scalar(zero_point)
         zp = zp.expand_as(scale)
-        zp = cls.zero_point_with_dtype(is_signed, bit_width, zp)
+        zp = qutils.zero_point_with_dtype(is_signed, bit_width, zp)
         return {
             'scale': scale,
             'zero_point': zp,
@@ -156,7 +154,7 @@ class QCDQCastWeightQuantProxyHandlerMixin(QMixin, CDQCastProxyHandlerMixin):
         zp = to_0dim_if_scalar(zero_point.flatten())
         # expand_as must go after 0-dim check
         zp = zp.expand_as(scale)
-        zp = cls.zero_point_with_dtype(is_signed, bit_width, zp)
+        zp = qutils.zero_point_with_dtype(is_signed, bit_width, zp)
         if cls.itemize_quantize_scalar_params:
             scale = to_item_if_0dim(scale)
             zp = to_item_if_0dim(zp)
@@ -274,7 +272,7 @@ class QCDQCastActQuantProxyHandlerMixin(QMixin, CDQCastProxyHandlerMixin, ABC):
         zp = to_0dim_if_scalar(zero_point.flatten())
         # expand_as must go after 0-dim check
         zp = zp.expand_as(scale)
-        zp = cls.zero_point_with_dtype(is_signed, bit_width, zp)
+        zp = qutils.zero_point_with_dtype(is_signed, bit_width, zp)
         if cls.itemize_quantize_scalar_params:
             scale = to_item_if_0dim(scale)
             zp = to_item_if_0dim(zp)
@@ -370,7 +368,7 @@ class DynamicQDQCastActQuantProxyHandlerMixin(QMixin, DQCastMixin, ABC):
         return x, scale, zero_point, bit_width
 
 
-class CDQCastBiasQuantProxyHandlerMixin(DQCastMixin, ZeroPointHandlerMixin, ABC):
+class CDQCastBiasQuantProxyHandlerMixin(DQCastMixin, ABC):
     handled_layer = BiasQuantProxyFromInjector
 
     def validate(self, module):
@@ -412,7 +410,7 @@ class CDQCastBiasQuantProxyHandlerMixin(DQCastMixin, ZeroPointHandlerMixin, ABC)
             zero_point = zero_point.flatten()
         scale = to_0dim_if_scalar(scale)
         zero_point = to_0dim_if_scalar(zero_point).expand_as(scale)
-        zero_point = self.zero_point_with_dtype(
+        zero_point = qutils.zero_point_with_dtype(
             True, bit_width, zero_point)  # assume signed is True
         # If original dtype of scale is (b)float16, store the original dtype
         # and cast the scale to float32
@@ -430,7 +428,7 @@ class CDQCastBiasQuantProxyHandlerMixin(DQCastMixin, ZeroPointHandlerMixin, ABC)
         return y, scale, zero_point, bit_width
 
 
-class QCDQCastTruncQuantProxyHandlerMixin(ZeroPointHandlerMixin, QMixin, CDQCastMixin, ABC):
+class QCDQCastTruncQuantProxyHandlerMixin(QMixin, CDQCastMixin, ABC):
     handled_layer = TruncQuantProxyFromInjector
 
     def prepare_for_export(self, module: TruncQuantProxyFromInjector):
