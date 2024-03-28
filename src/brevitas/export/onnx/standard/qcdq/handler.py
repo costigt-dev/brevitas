@@ -46,13 +46,10 @@ class StdDQCastONNXMixin(DQCastMixin, ABC):
         assert module.bit_width() > 1., 'Binary quant not supported'
 
 
-class StdCDQCastONNXMixin(CDQCastMixin, StdDQCastONNXMixin, ABC):
+class StdQCDQCastONNXMixin(QMixin, CDQCastMixin, StdDQCastONNXMixin, ABC):
 
     def clip_fn(self, x, min_val, max_val):
         return IntClipFn.apply(x, min_val, max_val)
-
-
-class StdQCDQCastONNXMixin(QMixin, StdCDQCastONNXMixin, ABC):
 
     @classmethod
     def int8_dtype(cls):
